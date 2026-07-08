@@ -935,9 +935,9 @@ export class OpenAIProvider extends BaseLLMProvider {
     return m.startsWith("gpt-5") || m.startsWith("o1") || m.startsWith("o3") || m.startsWith("o4");
   }
 
-  private formatMessages(messages: ChatMessage[], model?: string) {
+  private formatMessages(messages: ChatMessage[], model?: string): Array<Record<string, unknown>> {
     const devRole = model && this.usesDeveloperRole(model);
-    return messages
+    const formatted: Array<Record<string, unknown>> = messages
       .filter((m) => {
         // Keep tool messages and assistant messages with tool_calls regardless of content
         if (m.role === "tool") return true;
@@ -975,6 +975,76 @@ export class OpenAIProvider extends BaseLLMProvider {
         const role = m.role === "system" && devRole ? "developer" : m.role;
         return { role, content: m.content, ...reasoningPayload };
       });
+    // Strict OpenAI-compatible servers (vLLM, llama.cpp, TGI) apply Jinja chat
+    // templates that reject non-alternating message sequences with HTTP 400
+    // ("conversation roles must alternate user/assistant"). Real OpenAI tolerates
+    // these shapes, so only normalize for generic custom endpoints, where the
+    // prompt assembler may emit mid-conversation system messages (e.g. RPG
+    // narrator turns mapped to role "system") or consecutive same-role messages.
+    return this.isGenericCustomProvider() ? this.normalizeForStrictServers(formatted) : formatted;
+  }
+
+  /**
+   * Guarantee a Chat Completions message array satisfies the strict alternation
+   * rules enforced by some OpenAI-compatible servers:
+   *   1. At most one leading system message — no system after the first
+   *      non-system message.
+   *   2. No two consecutive user/assistant messages.
+   * Tool messages and assistant tool_call messages are preserved untouched; the
+   * assistant(tool_calls) → tool → … → user sequence is already valid.
+   */
+  private normalizeForStrictServers(
+    messages: Array<Record<string, unknown>>,
+  ): Array<Record<string, unknown>> {
+    // 1. Collapse every relocatable system message into a single leading block.
+    //    Only plain-text system messages are relocated; structured (array)
+    //    system content is left in place as a rare, non-triggering shape.
+    const systemParts: string[] = [];
+    const remainder: Array<Record<string, unknown>> = [];
+    for (const m of messages) {
+      if (m.role === "system" && typeof m.content === "string") {
+        if (m.content.trim()) systemParts.push(m.content);
+      } else {
+        remainder.push(m);
+      }
+    }
+
+    // 2. Merge consecutive same-role user/assistant messages. Tool messages and
+    //    assistant messages carrying tool_calls are never merged.
+    const merged: Array<Record<string, unknown>> = [];
+    for (const m of remainder) {
+      const role = m.role;
+      const mergeable = role === "user" || (role === "assistant" && !m.tool_calls);
+      const prev = merged[merged.length - 1];
+      if (mergeable && prev && prev.role === role && !prev.tool_calls) {
+        prev.content = OpenAIProvider.mergeMessageContent(prev.content, m.content);
+      } else {
+        merged.push({ ...m });
+      }
+    }
+
+    // 3. Reattach the leading system message (if any) ahead of the conversation.
+    const result: Array<Record<string, unknown>> = [];
+    if (systemParts.length > 0) {
+      result.push({ role: "system", content: systemParts.join("\n\n") });
+    }
+    result.push(...merged);
+    return result;
+  }
+
+  /**
+   * Concatenate two Chat Completions `content` values. Strings are joined with a
+   * blank line; structured part arrays are concatenated, promoting bare strings
+   * to text parts so the result stays a valid content array.
+   */
+  private static mergeMessageContent(a: unknown, b: unknown): unknown {
+    if (typeof a === "string" && typeof b === "string") return `${a}\n\n${b}`;
+    const toParts = (value: unknown): Array<Record<string, unknown>> => {
+      if (Array.isArray(value)) return value as Array<Record<string, unknown>>;
+      if (typeof value === "string" && value.trim()) return [{ type: "text", text: value }];
+      return [];
+    };
+    return [...toParts(a), ...toParts(b)];
   }
 
   async *chat(messages: ChatMessage[], options: ChatOptions): AsyncGenerator<string, LLMUsage | void, unknown> {

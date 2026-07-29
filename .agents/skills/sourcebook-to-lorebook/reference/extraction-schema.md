@@ -30,8 +30,8 @@ Field rules:
 - `category` — one of `world` | `character` | `npc` | `spellbook` | `uncategorized`.
 - `tag` — one of `location` | `character` | `item` | `faction` | `lore` | `magic` | `creature` | `event`.
 - `chapter` — the section title this came from (used to assign `folderId`: one folder per chapter).
-- `relationships` — names of other entries this connects to (resolved to `relationships` links in consolidation).
-- `selective` / `logic` — set `selective: true` when `keys` are generic and must co-occur with a `secondaryKey` to avoid false triggers.
+- `relationships` — array of other entries' names this connects to. This is an **authoring alias**: emit (Phase 5) maps it to the native `Record<string,string>` form (`name → descriptor`, e.g. `{"That Which Was Marlene": "related"}`). Consolidation (Phase 3) makes the set bidirectional.
+- `selective` / `logic` — set `selective: true` when `keys` are generic and must co-occur with a `secondaryKey` to avoid false triggers. `logic` is an **authoring alias** for the native `selectiveLogic` enum (`and` | `and_all` | `or` | `not` | `not_all`); emit renames `logic → selectiveLogic`. Do NOT POST a `logic` field directly.
 
 ## Phase 2 — DM fragments (one bundle per `dm-card` chunk)
 

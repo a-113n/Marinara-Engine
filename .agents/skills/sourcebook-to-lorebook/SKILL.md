@@ -1,6 +1,6 @@
 ---
 name: sourcebook-to-lorebook
-description: Use when the user wants to convert an RPG sourcebook PDF (or text) into a Marinara Engine lorebook and a DM character card. Extracts world facts into a native lorebook with chapter-folders, tags, and vectorization, and specializes a base DM character card with the sourcebook's tone, narration style, fiction inspiration, and turn/step procedures. Runs an outline-gated pipeline: builds a partition plan for human approval, then extracts, consolidates, authors the DM card, and emits native Marinara JSON artifacts. Not for non-sourcebook PDFs or OCR of scanned books.
+description: "Use when the user wants to convert an RPG sourcebook PDF (or text) into a Marinara Engine lorebook and a DM character card. Extracts world facts into a native lorebook with chapter-folders, tags, and vectorization, and specializes a base DM character card with the sourcebook's tone, narration style, fiction inspiration, and turn/step procedures. Runs an outline-gated pipeline: builds a partition plan for human approval, then extracts, consolidates, authors the DM card, and emits native Marinara JSON artifacts. Not for non-sourcebook PDFs or OCR of scanned books."
 ---
 
 # Sourcebook → Lorebook + DM Card

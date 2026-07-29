@@ -32,6 +32,9 @@ dist/
 *.swp
 *.swo
 
+# Local coding-agent tooling (pi project config)
+.pi/
+
 # OS
 .DS_Store
 Thumbs.db

@@ -31,10 +31,44 @@ Paths below are relative to the skill directory (`../` reaches repo root).
 3. **Working dir.** `.tmp/sourcebook-<slug>/` at repo root (gitignored). All outputs land here.
 4. **Base card.** Confirm `reference/base-dm-card.json` is readable.
 5. **Server reachability.** Probe whether the Marinara server is up (e.g. a quick `GET /api/health` or similar). Remember the result for Phase 5 — it decides POST vs file-only. Don't block on it.
+6. **Lorebook probe.** Probe `GET /api/lorebooks` to find existing lorebooks. If a matching lorebook exists (same franchise, same world, or the user already has a related lorebook), present it to the user and ask whether this sourcebook supplements it or creates a new standalone lorebook. This is the supplement-mode decision — cheap to make at the start, expensive to fix later.
 
 ## Phase 1 — Ingest & outline  ✅ GATE
 
 **Goal:** produce a **partition plan** and get the user to approve it before any extraction.
+
+### Supplement mode
+
+Some sourcebooks are **supplements** — operations, adventures, or world guides that add to an existing lorebook rather than starting a new one. Examples: a campaign book that adds new locations/NPCs/creatures to a core world's lorebook, or a setting guide that extends a parent world.
+
+In supplement mode:
+- The partition plan includes an `existingLorebook` field identifying the target lorebook `id` and `name`.
+- Phase 5 does **not** create a new lorebook shell — it POSTs folders and entries directly to the existing lorebook `id`.
+- The DM card is still emitted normally (it is always independent).
+- Chapter folders are created **inside** the existing lorebook.
+- The agent should check whether a Delta Green / Star Trek / etc. lorebook already exists in the user's library before creating a new one. Ask the user or probe the server (`GET /api/lorebooks`) to find existing lorebooks.
+
+### Partition plan additions for supplement mode
+
+```json
+{
+  "existingLorebook": {
+    "id": "<lorebook-id>",
+    "name": "<existing lorebook name>",
+    "action": "supplement"
+  }
+}
+```
+
+Each lorebook-section in the partition plan can also carry a `supplementTo` field (overriding the top-level default if needed).
+
+### Probe for existing lorebooks
+
+Before Phase 1, optionally probe the server:
+```bash
+curl -s -H "x-marinara-csrf: 1" "http://127.0.0.1:7860/api/lorebooks"
+```
+Present any matching lorebooks to the user and ask whether this sourcebook supplements one of them or creates a new standalone lorebook.
 
 1. **Extract text.** If PDF, run from the repo root:
    ```bash
@@ -45,10 +79,7 @@ Paths below are relative to the skill directory (`../` reaches repo root).
    If the input is already text, just use it.
 2. **Infer chapter/section structure.** Identify the table of contents, "Chapter N" headings, numbered sections, and page breaks. Map sections to approximate page ranges.
 3. **Assign a bucket to every section** using `reference/partition-rubric.md` (`dm-card` / `lorebook` / `discard`). Estimate entry counts for `lorebook` sections.
-4. **Emit the partition plan** in the shape from `reference/partition-rubric.md`:
-   ```json
-   { "sourcebook": "<title>", "sections": [ { "title", "pageRange", "bucket", "reason", "estEntries" } ] }
-   ```
+4. **Emit the partition plan** in the shape from `reference/partition-rubric.md`. Include `existingLorebook` if supplementing a parent lorebook. Include a `roster` flag if pregen characters are present.
 5. **🔴 PRESENT THE PLAN TO THE USER AND STOP.** Do not begin extraction until the user approves or edits it (they may flip buckets or adjust estimates). This is the one checkpoint — the partition decision is cheap to fix now and expensive after entries exist.
 
 ## Phase 2 — Extract
@@ -89,6 +120,21 @@ Write the consolidated entries to `lorebook-entries.json`. Group entries by thei
 5. **No DM fragments found?** Ship the base card **unchanged** and flag it in `creator_notes` with the `no-run-the-game-content` tag (see `dm-card-field-map.md`).
 
 Write the card to `dm-card.json`.
+
+### Supplement mode in Phase 5
+
+If the partition plan has an `existingLorebook` field with `action: "supplement"`:
+- **Do NOT** `POST /api/lorebooks` (no new lorebook shell).
+- POST folders directly to the existing lorebook `id`: `POST /api/lorebooks/:existingId/folders`.
+- POST entries to the existing lorebook `id`: `POST /api/lorebooks/:existingId/entries/bulk`.
+- The DM card is still POSTed normally to `/api/characters`.
+- The `lorebook.json` file written for validation contains the shell metadata (for the validator) but its `id` is the existing lorebook's `id`; the emit script skips lorebook creation when `existingLorebook` is set.
+
+For a **roster save** (`bucket: "roster"`), emit a separate `roster-data.mjs` + `save-roster.mjs` alongside the main artifacts. Use the same pattern from prior runs:
+- `roster-data.mjs` exports `characters` (full chara_card_v2) and `personas` arrays.
+- `save-roster.mjs` POSTs characters to `/api/characters`, personas to `/api/characters/personas`, creates/reuses a named group in both `/api/characters/groups` and `/api/characters/persona-groups`.
+- Idempotent: dedup characters by name+creator; personas by name+creator; groups by name (union member IDs on reuse).
+- Use `x-marinara-csrf: 1` header and port 7860.
 
 ## Phase 5 — Emit
 

@@ -8,13 +8,28 @@ The routing rules the agent applies to **every** sourcebook section in Phase 1 (
 |---|---|
 | Tone & mood, narration style, fiction inspirations, "how to run", turn/round/step procedures, pacing, when-to-roll, fail-forward, NPC portrayal, session/arc advice | **dm-card** |
 | Geography, history, factions, religions, NPCs, creatures/bestiary, magic systems, spells, items, races/cultures, cosmology, world-rules | **lorebook** |
+| Pregenerated player characters or NPCs | **roster** (emit via roster runner; ask the user) |
 | OGL/legal text, table of contents & indexes (used for outline only, not imported), blank character sheets, ads/credits, running headers/footers & page chrome | **discard** |
 
 ## Bucket definitions
 
-- **`dm-card`** — *how to run the game*. Procedural and tonal guidance the Game Master needs in every turn: how to narrate, when to call for rolls, how to pace, what tone to strike. This material shapes the card's `system_prompt`, `personality`, and `post_history_instructions`. It is general to the *whole game*, not a specific fact the players look up.
+- **`dm-card`** — *how to run the game*. Procedural and tonal guidance the Game Master needs in every turn.
+- **`lorebook`** — *facts about the world*. Discrete, nameable things a player's action might touch and the GM must recall on demand.
+- **`roster`** — *pregenerated characters*. Pregenerated player characters or NPCs. Emit via a separate `roster-data.mjs` + `save-roster.mjs` runner (see Phase 5 supplement notes). Save to a named group (e.g. the sourcebook title). Ask the user whether to save pregens.
+- **`discard`** — *not game content*. Procedural and tonal guidance the Game Master needs in every turn: how to narrate, when to call for rolls, how to pace, what tone to strike. This material shapes the card's `system_prompt`, `personality`, and `post_history_instructions`. It is general to the *whole game*, not a specific fact the players look up.
 - **`lorebook`** — *facts about the world*. Discrete, nameable things a player's action might touch and the GM must recall on demand: places, people, creatures, factions, spells, items, rules-subsystems. Each becomes a **keyword-activatable entry** so it injects only when relevant.
 - **`discard`** — *not game content*. Legal text, navigation aids, fillers. Keep the ToC around only long enough to infer the chapter structure in Phase 1, then drop it.
+
+## Supplement-mode routing
+
+A **supplement** is a sourcebook that adds world facts to an existing lorebook (e.g. a campaign book adding locations/NPCs/creatures to a core world's lorebook, or an operations collection adding scenarios to a parent game).
+
+In supplement mode:
+- Default `existingLorebook` is detected from the Setup gate's lorebook probe.
+- Sections that are **world facts** → `lorebook` bucket, `supplementTo: <parent-id>`.
+- Sections that are **how to run the game** → `dm-card` bucket (the DM card is always independent; it supplements the existing Handler card, not the lorebook).
+- Sections that are **pregenerated characters** → `roster` bucket.
+- Operations/scenarios that are **world facts** → `lorebook`, not `dm-card`. Scenario-execution guidance goes into the DM card's `procedures`, not the lorebook.
 
 ## Judgment-call rules
 
@@ -41,16 +56,23 @@ The Phase 1 outline is a JSON object the agent builds from the extracted text an
 ```json
 {
   "sourcebook": "<title>",
+  "existingLorebook": { "id": "<id>", "name": "<name>", "action": "supplement" },
   "sections": [
     {
       "title": "Chapter 3: The Shattered Coast",
       "pageRange": "42-61",
       "bucket": "lorebook",
       "reason": "regional geography, settlements, one creature stat block",
-      "estEntries": 12
+      "estEntries": 12,
+      "supplementTo": "<existing-lorebook-id>"
     }
   ]
 }
 ```
 
-The human may edit `bucket` or `estEntries` per section before Phase 2 begins. Buckets drive both extraction (Phase 2) and the chapter-folder plan for the lorebook (one folder per chapter that contains ≥1 `lorebook` section).
+- `existingLorebook` → omit to create a new standalone lorebook; include to supplement an existing one.
+- `sections[].supplementTo` → optionally override the default existing lorebook for a specific section (useful if a supplement spans multiple parent lorebooks).
+- `bucket: "roster"` → pregenerated characters/NPCs. Emit via a separate roster runner (not the main emit).
+
+
+The human may edit `bucket`, `estEntries`, or `existingLorebook` per section before Phase 2 begins.

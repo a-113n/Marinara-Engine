@@ -62,6 +62,7 @@ type ConversationSummaryConnection = {
   maxTokensOverride?: number | null;
   claudeFastMode?: string | null;
   treatAsLocalEndpoint?: string | null;
+  forceStrictAlternation?: string | null;
   defaultParameters?: unknown;
 };
 
@@ -171,6 +172,7 @@ export async function prepareConversationPromptHistory(args: {
       args.connection.maxTokensOverride,
       args.connection.claudeFastMode === "true",
       args.connection.treatAsLocalEndpoint === "true",
+      args.connection.forceStrictAlternation === "true",
       args.connection.defaultParameters,
     ),
     primaryConnectionId: args.connectionId,

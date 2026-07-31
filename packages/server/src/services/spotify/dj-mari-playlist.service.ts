@@ -592,6 +592,7 @@ async function generatePlaylistPlan(args: {
     conn.maxTokensOverride,
     conn.claudeFastMode === "true",
     conn.treatAsLocalEndpoint === "true",
+    conn.forceStrictAlternation === "true",
     conn.defaultParameters,
   );
 

@@ -25,6 +25,7 @@ export type FallbackConnection = {
   cachingAtDepth?: number | null;
   claudeFastMode?: string | boolean | null;
   treatAsLocalEndpoint?: string | boolean | null;
+  forceStrictAlternation?: string | boolean | null;
 };
 
 type ConnectionFallbackProviderArgs = {
@@ -199,6 +200,7 @@ export function withConnectionFallbackProvider({
     fallbackConnection.maxTokensOverride,
     isEnabled(fallbackConnection.claudeFastMode),
     isEnabled(fallbackConnection.treatAsLocalEndpoint),
+    isEnabled(fallbackConnection.forceStrictAlternation),
     fallbackConnection.defaultParameters,
   );
   return new ConnectionFallbackProvider(primary, fallback, fallbackConnection, category, onFallback);

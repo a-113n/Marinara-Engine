@@ -51,6 +51,7 @@ export const createConnectionSchema = z.object({
   maxTokensOverride: z.number().int().min(1).nullable().default(null),
   maxParallelJobs: z.number().int().min(1).max(16).default(1),
   treatAsLocalEndpoint: z.boolean().default(false),
+  forceStrictAlternation: z.boolean().default(false),
   claudeFastMode: z.boolean().default(false),
 });
 

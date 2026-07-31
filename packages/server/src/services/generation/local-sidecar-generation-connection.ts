@@ -34,6 +34,7 @@ export type LocalSidecarGenerationConnection = {
   maxTokensOverride: null;
   maxParallelJobs: number;
   treatAsLocalEndpoint: "true";
+  forceStrictAlternation: "false";
   claudeFastMode: "false";
   folderId: null;
   sortOrder: number;
@@ -74,6 +75,7 @@ export function createLocalSidecarGenerationConnection(): LocalSidecarGeneration
     maxTokensOverride: null,
     maxParallelJobs: 1,
     treatAsLocalEndpoint: "true",
+    forceStrictAlternation: "false",
     claudeFastMode: "false",
     folderId: null,
     sortOrder: 0,

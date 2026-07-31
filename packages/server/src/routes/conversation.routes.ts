@@ -404,6 +404,7 @@ export async function conversationRoutes(app: FastifyInstance) {
         conn.maxTokensOverride,
         conn.claudeFastMode === "true",
         conn.treatAsLocalEndpoint === "true",
+        conn.forceStrictAlternation === "true",
         conn.defaultParameters,
       ),
       primaryConnectionId: conn.id,

@@ -588,6 +588,7 @@ export async function encounterRoutes(app: FastifyInstance) {
         conn.maxTokensOverride,
         conn.claudeFastMode === "true",
         conn.treatAsLocalEndpoint === "true",
+        conn.forceStrictAlternation === "true",
         conn.defaultParameters,
       );
 
@@ -698,6 +699,7 @@ export async function encounterRoutes(app: FastifyInstance) {
         conn.maxTokensOverride,
         conn.claudeFastMode === "true",
         conn.treatAsLocalEndpoint === "true",
+        conn.forceStrictAlternation === "true",
         conn.defaultParameters,
       );
 
@@ -799,6 +801,7 @@ export async function encounterRoutes(app: FastifyInstance) {
         conn.maxTokensOverride,
         conn.claudeFastMode === "true",
         conn.treatAsLocalEndpoint === "true",
+        conn.forceStrictAlternation === "true",
         conn.defaultParameters,
       );
 

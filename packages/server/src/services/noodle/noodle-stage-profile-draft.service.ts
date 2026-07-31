@@ -159,6 +159,7 @@ export async function generateNoodlerStageProfileDraft(
       input.connection.maxTokensOverride,
       input.connection.claudeFastMode === "true",
       input.connection.treatAsLocalEndpoint === "true",
+      input.connection.forceStrictAlternation === "true",
       input.connection.defaultParameters,
     ),
     primaryConnectionId: input.connection.id,

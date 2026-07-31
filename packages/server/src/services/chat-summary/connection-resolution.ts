@@ -134,6 +134,7 @@ export async function resolveChatSummaryConnection(args: {
           conn.maxTokensOverride,
           conn.claudeFastMode === "true",
           conn.treatAsLocalEndpoint === "true",
+          conn.forceStrictAlternation === "true",
           conn.defaultParameters,
         ),
         conn.id,

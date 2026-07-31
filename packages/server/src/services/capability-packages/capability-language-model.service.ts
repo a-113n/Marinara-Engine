@@ -39,6 +39,7 @@ export function createCapabilityLanguageModelHost(db: DB): CapabilityLanguageMod
         connection.maxTokensOverride,
         connection.claudeFastMode === "true",
         connection.treatAsLocalEndpoint === "true",
+        connection.forceStrictAlternation === "true",
       );
       return Object.freeze({
         connectionId: connection.id,

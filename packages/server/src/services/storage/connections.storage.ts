@@ -147,6 +147,7 @@ export function createConnectionsStorage(db: DB) {
         maxTokensOverride: input.maxTokensOverride ?? null,
         claudeFastMode: String(input.claudeFastMode ?? false),
         treatAsLocalEndpoint: String(input.treatAsLocalEndpoint ?? false),
+        forceStrictAlternation: String(input.forceStrictAlternation ?? false),
         createdAt: timestamp,
         updatedAt: timestamp,
       };
@@ -302,6 +303,9 @@ export function createConnectionsStorage(db: DB) {
       }
       if (data.treatAsLocalEndpoint !== undefined) {
         updateFields.treatAsLocalEndpoint = String(data.treatAsLocalEndpoint);
+      }
+      if (data.forceStrictAlternation !== undefined) {
+        updateFields.forceStrictAlternation = String(data.forceStrictAlternation);
       }
       await db.transaction(async (tx) => {
         if (shouldClearDefault) {

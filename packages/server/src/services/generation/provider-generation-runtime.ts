@@ -32,6 +32,7 @@ type GenerationConnection = {
   defaultParameters?: unknown;
   claudeFastMode?: unknown;
   treatAsLocalEndpoint?: unknown;
+  forceStrictAlternation?: unknown;
 };
 
 type GenerationProviderRuntimeArgs = {
@@ -192,6 +193,7 @@ export function resolveGenerationProviderRuntime(args: GenerationProviderRuntime
           args.connection.maxTokensOverride,
           args.connection.claudeFastMode === "true",
           args.connection.treatAsLocalEndpoint === "true",
+          args.connection.forceStrictAlternation === "true",
           args.connection.defaultParameters,
         );
   const provider = withConnectionFallbackProvider({

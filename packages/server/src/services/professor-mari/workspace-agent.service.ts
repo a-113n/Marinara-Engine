@@ -79,6 +79,7 @@ type WorkspaceConnection = Pick<
   | "openrouterProvider"
   | "claudeFastMode"
   | "treatAsLocalEndpoint"
+  | "forceStrictAlternation"
   | "enableCaching"
   | "anthropicExtendedCacheTtl"
   | "cachingAtDepth"
@@ -785,6 +786,7 @@ function createProviderForConnection(connection: WorkspaceConnection): BaseLLMPr
     connection.maxTokensOverride,
     bool(connection.claudeFastMode),
     bool(connection.treatAsLocalEndpoint),
+    bool(connection.forceStrictAlternation),
     connection.defaultParameters,
   );
 }
@@ -2446,6 +2448,7 @@ ${sections.join("\n\n")}
       openrouterProvider: null,
       claudeFastMode: "false",
       treatAsLocalEndpoint: "true",
+      forceStrictAlternation: "false",
       enableCaching: "false",
       anthropicExtendedCacheTtl: "false",
       cachingAtDepth: 5,

@@ -31,6 +31,7 @@ export type ConnectionTransferRow = {
   imageEndpointId?: unknown;
   comfyuiWorkflow?: unknown;
   treatAsLocalEndpoint?: unknown;
+  forceStrictAlternation?: unknown;
   claudeFastMode?: unknown;
 };
 
@@ -63,6 +64,7 @@ export type SafeConnectionExport = {
   imageEndpointId: string | null;
   comfyuiWorkflow: string | null;
   treatAsLocalEndpoint: boolean;
+  forceStrictAlternation: boolean;
   claudeFastMode: boolean;
 };
 
@@ -137,6 +139,7 @@ export function normalizeImportedConnectionEntry(value: unknown): ConnectionImpo
       maxTokensOverride: asNullablePositiveInteger(value.maxTokensOverride),
       maxParallelJobs: asBoundedPositiveInteger(value.maxParallelJobs, 1, MAX_PARALLEL_JOBS),
       treatAsLocalEndpoint: asBoolean(value.treatAsLocalEndpoint),
+      forceStrictAlternation: asBoolean(value.forceStrictAlternation),
       claudeFastMode: asBoolean(value.claudeFastMode),
     },
     defaultParameters,
@@ -176,6 +179,7 @@ function serializeConnectionForExport(connection: ConnectionTransferRow): SafeCo
     imageEndpointId: asNullableString(connection.imageEndpointId),
     comfyuiWorkflow: asNullableString(connection.comfyuiWorkflow),
     treatAsLocalEndpoint: asBoolean(connection.treatAsLocalEndpoint),
+    forceStrictAlternation: asBoolean(connection.forceStrictAlternation),
     claudeFastMode: asBoolean(connection.claudeFastMode),
   };
 }

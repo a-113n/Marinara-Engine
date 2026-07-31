@@ -116,6 +116,13 @@ export class OpenAIProvider extends BaseLLMProvider {
     private readonly extraHeaders?: Record<string, string>,
     /** When true, body.tools is sent even if the model name triggers parameter suppression. */
     private readonly allowsToolCalling: boolean = false,
+    /**
+     * When true, normalize the outbound message array for strict OpenAI-compatible servers
+     * (vLLM, llama.cpp, TGI) whose Jinja chat templates reject non-alternating sequences.
+     * Collapses system messages to the front, merges consecutive same-role messages, and
+     * ensures the first non-system message is `user`. Opt-in via the connection toggle.
+     */
+    private readonly forceStrictAlternation: boolean = false,
   ) {
     super(baseUrl, apiKey, defaultMaxContext, defaultOpenrouterProvider, maxTokensOverride);
   }
@@ -975,13 +982,14 @@ export class OpenAIProvider extends BaseLLMProvider {
         const role = m.role === "system" && devRole ? "developer" : m.role;
         return { role, content: m.content, ...reasoningPayload };
       });
-    // Strict OpenAI-compatible servers (vLLM, llama.cpp, TGI) apply Jinja chat
-    // templates that reject non-alternating message sequences with HTTP 400
-    // ("conversation roles must alternate user/assistant"). Real OpenAI tolerates
-    // these shapes, so only normalize for generic custom endpoints, where the
-    // prompt assembler may emit mid-conversation system messages (e.g. RPG
-    // narrator turns mapped to role "system") or consecutive same-role messages.
-    return this.isGenericCustomProvider() ? this.normalizeForStrictServers(formatted) : formatted;
+    // Strict OpenAI-compatible servers (vLLM, llama.cpp, TGI) apply Jinja chat templates
+    // that reject non-alternating message sequences with HTTP 400 ("conversation roles
+    // must alternate user/assistant"). Real OpenAI tolerates these shapes, so normalize
+    // only when the connection explicitly opts in via the "Force strict alternation"
+    // toggle (Custom OpenAI-compatible endpoints). The assembler may emit mid-conversation
+    // system messages (e.g. RPG narrator turns mapped to role "system"), consecutive
+    // same-role messages, or an assistant-first opening that strict templates reject.
+    return this.forceStrictAlternation ? this.normalizeForStrictServers(formatted) : formatted;
   }
 
   /**
@@ -1029,6 +1037,19 @@ export class OpenAIProvider extends BaseLLMProvider {
       result.push({ role: "system", content: systemParts.join("\n\n") });
     }
     result.push(...merged);
+
+    // 4. Some strict templates (e.g. Mistral) additionally require the first non-system
+    //    message to be `user`. A roleplay conversation that opens with an assistant
+    //    greeting violates this; prepend a minimal user turn so the sequence becomes
+    //    system? -> user -> assistant -> ... Multi-turn structure is preserved.
+    //    ponytail: content is a single space (non-empty, survives content filters). If
+    //    a server rejects blank user turns, use the assembler's singleUserMessage preset
+    //    flag to pack everything into one user message instead.
+    const firstNonSystemIdx = result.findIndex((m) => m.role !== "system");
+    const firstNonSystem = firstNonSystemIdx !== -1 ? result[firstNonSystemIdx] : undefined;
+    if (firstNonSystem && firstNonSystem.role !== "user") {
+      result.splice(firstNonSystemIdx, 0, { role: "user", content: " " });
+    }
     return result;
   }
 

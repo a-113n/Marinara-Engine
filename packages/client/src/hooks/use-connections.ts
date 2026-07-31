@@ -60,6 +60,7 @@ export type CreateConnectionPayload = {
   maxTokensOverride?: number | null;
   maxParallelJobs?: number;
   treatAsLocalEndpoint?: boolean;
+  forceStrictAlternation?: boolean;
   claudeFastMode?: boolean;
 };
 

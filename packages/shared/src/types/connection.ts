@@ -79,6 +79,12 @@ export interface APIConnection {
   maxParallelJobs: number;
   /** Treat this endpoint as local/custom for Professor Mari tool-protocol fallbacks. */
   treatAsLocalEndpoint: boolean;
+  /**
+   * Custom OpenAI-compatible endpoints only. Forces strict user/assistant alternation
+   * (system collapsed to front, consecutive same-role merged, user-first opening) for
+   * servers whose chat templates reject non-alternating sequences (e.g. local Mistral).
+   */
+  forceStrictAlternation: boolean;
   /** Folder this connection belongs to (null = root/unfiled). */
   folderId: string | null;
   /** Manual sort order within a folder (lower = higher). 0 = use default sort. */

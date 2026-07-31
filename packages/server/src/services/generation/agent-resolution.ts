@@ -245,6 +245,7 @@ async function resolveAgentConnectionProvider(args: {
     agentConn.maxTokensOverride,
     agentConn.claudeFastMode === "true",
     agentConn.treatAsLocalEndpoint === "true",
+    agentConn.forceStrictAlternation === "true",
     agentConn.defaultParameters,
   );
   const resolved = {

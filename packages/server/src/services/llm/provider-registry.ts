@@ -46,6 +46,11 @@ export function createLLMProvider(
    * not in the OpenAI catalog (suppression bypass). Mirrors the connection's treatAsLocalEndpoint flag.
    */
   treatAsLocalEndpoint?: boolean,
+  /**
+   * Custom OpenAI-compatible endpoints only. When true, normalize outbound messages for strict chat
+   * templates (local Mistral, vLLM, llama.cpp) that reject non-alternating or assistant-first sequences.
+   */
+  forceStrictAlternation?: boolean,
   /** Stored connection defaults. Custom Parameters are bound to every text request made by this provider. */
   defaultParameters?: unknown,
 ): BaseLLMProvider {
@@ -84,6 +89,7 @@ export function createLLMProvider(
         "custom",
         undefined,
         !(treatAsLocalEndpoint ?? false),
+        forceStrictAlternation ?? false,
       );
       break;
     case "openai_chatgpt":
@@ -156,6 +162,7 @@ export function createLLMProvider(
         "custom",
         undefined,
         !(treatAsLocalEndpoint ?? false),
+        forceStrictAlternation ?? false,
       );
       break;
   }

@@ -1189,6 +1189,7 @@ export async function lorebooksRoutes(app: FastifyInstance) {
             resolvedConn.maxTokensOverride,
             resolvedConn.claudeFastMode === "true",
             resolvedConn.treatAsLocalEndpoint === "true",
+            resolvedConn.forceStrictAlternation === "true",
             resolvedConn.defaultParameters,
           );
         })();

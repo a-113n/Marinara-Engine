@@ -293,6 +293,7 @@ export function ConnectionEditor() {
   const [localMaxTokensOverride, setLocalMaxTokensOverride] = useState<number | null>(null);
   const [localClaudeFastMode, setLocalClaudeFastMode] = useState(false);
   const [localTreatAsLocalEndpoint, setLocalTreatAsLocalEndpoint] = useState(false);
+  const [localForceStrictAlternation, setLocalForceStrictAlternation] = useState(false);
   const [localDefaultParametersEnabled, setLocalDefaultParametersEnabled] = useState(false);
   const [localDefaultParameters, setLocalDefaultParameters] =
     useState<EditableGenerationParameters>(CONNECTION_PARAMETER_DEFAULTS);
@@ -408,6 +409,7 @@ export function ConnectionEditor() {
     setLocalMaxTokensOverride(typeof c.maxTokensOverride === "number" ? (c.maxTokensOverride as number) : null);
     setLocalClaudeFastMode(c.claudeFastMode === "true" || c.claudeFastMode === true);
     setLocalTreatAsLocalEndpoint(c.treatAsLocalEndpoint === "true" || c.treatAsLocalEndpoint === true);
+    setLocalForceStrictAlternation(c.forceStrictAlternation === "true" || c.forceStrictAlternation === true);
     setLocalDefaultParametersEnabled(!!parseEditableGenerationParameters(c.defaultParameters));
     setLocalDefaultParameters(getEditableGenerationParameters(CONNECTION_PARAMETER_DEFAULTS, c.defaultParameters));
     setLocalImageDefaults(
@@ -671,6 +673,7 @@ export function ConnectionEditor() {
       maxTokensOverride: localMaxTokensOverride ?? null,
       claudeFastMode: localClaudeFastMode,
       treatAsLocalEndpoint: canTreatAsLocalEndpoint ? localTreatAsLocalEndpoint : false,
+      forceStrictAlternation: localProvider === "custom" ? localForceStrictAlternation : false,
     };
     // Only send API key if user typed a new one
     if (isLocalAuthProvider) {
@@ -759,6 +762,7 @@ export function ConnectionEditor() {
     localMaxTokensOverride,
     localClaudeFastMode,
     localTreatAsLocalEndpoint,
+    localForceStrictAlternation,
     localDefaultParametersEnabled,
     localDefaultParameters,
     selectedImageService,
@@ -836,6 +840,7 @@ export function ConnectionEditor() {
       maxTokensOverride: localMaxTokensOverride ?? null,
       maxParallelJobs: localMaxParallelJobs,
       treatAsLocalEndpoint: canTreatAsLocalEndpoint ? localTreatAsLocalEndpoint : false,
+      forceStrictAlternation: localProvider === "custom" ? localForceStrictAlternation : false,
       promptPresetId: !isMediaProvider ? localPromptPresetId || null : null,
       defaultParameters,
       enableCaching: localEnableCaching,
@@ -871,6 +876,7 @@ export function ConnectionEditor() {
     localMaxTokensOverride,
     localMaxParallelJobs,
     localTreatAsLocalEndpoint,
+    localForceStrictAlternation,
     localPromptPresetId,
     localDefaultParametersEnabled,
     localDefaultParameters,
@@ -2116,6 +2122,28 @@ export function ConnectionEditor() {
               <p className="mt-1 text-[0.625rem] text-[var(--muted-foreground)]">
                 Enable this if Professor Mari stops after tool use or your endpoint advertises OpenAI compatibility but
                 does not reliably support tool calls.
+              </p>
+            </FieldGroup>
+          )}
+
+          {localProvider === "custom" && (
+            <FieldGroup
+              label="Strict Server Compatibility"
+              icon={<MessageSquare size="0.875rem" className="text-[var(--marinara-chat-chrome-button-text-active)]" />}
+              help="For local OpenAI-compatible servers (vLLM, llama.cpp, TGI) whose chat templates reject non-alternating message sequences with HTTP 400. Collapses system messages to the front, merges consecutive same-role messages, and ensures the conversation opens with a user message. Multi-turn structure is preserved."
+            >
+              <SettingsSwitch
+                label="Force strict message alternation"
+                checked={localForceStrictAlternation}
+                onChange={(checked) => {
+                  setLocalForceStrictAlternation(checked);
+                  markDirty();
+                }}
+              />
+              <p className="mt-1 text-[0.625rem] text-[var(--muted-foreground)]">
+                Enable for strict templates like local Mistral finetunes that require the conversation to start with a
+                user message and strictly alternate user/assistant turns. Leave off for endpoints that tolerate any
+                message order (real OpenAI, most cloud APIs).
               </p>
             </FieldGroup>
           )}
